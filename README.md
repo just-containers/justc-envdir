@@ -5,7 +5,7 @@ This is a quick and dirty fork of the [s6-envdir](https://skarnet.org/software/s
 Differences between this version and `s6-envdir`:
 
 | `justc-envdir` | `s6-envdir` |
-|------------------------------|
+|----------------|-------------|
 | Reads the entire file into the environment. | Truncates at 4095 bytes. |
 | Allows setting empty environment variables with empty files. | Removes environment variables on empty files. |
 | Does not transform `NULL` bytes, terminates variable at first `NULL` byte. | Transforms `NULL` bytes. |
