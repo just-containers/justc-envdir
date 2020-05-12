@@ -59,6 +59,7 @@ fi
 
 bunzip2 "tools/downloads/linux-amd64-github-release.bz2"
 mv "tools/downloads/linux-amd64-github-release" "tools/cross/bin/github-release"
+chmod +x "tools/cross/bin/github-release"
 
 for target in "${targets[@]}" ; do
   gccurl="$musl_cross_make/gcc-${gccver}-${target}.tar.xz"
