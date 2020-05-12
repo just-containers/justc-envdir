@@ -1,0 +1,16 @@
+language: c
+compiler: gcc
+sudo: false
+dist: trusty
+
+install:
+  - openssl aes-256-cbc -K $OPENSSL_KEY -iv $OPENSSL_IV -in tools/keys.tar.xz.enc -out tools/keys.tar.xz -d
+  - tar xf tools/keys.tar.xz -C tools
+  - gpg --import tools/keys/public.key
+  - gpg --allow-secret-key-import --import tools/keys/private.key
+
+script:
+  - ./tools/travis-build
+
+after_success:
+  - ./tools/travis-upload

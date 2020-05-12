@@ -1,0 +1,7 @@
+/config.mak
+/justc-envdir
+*.o
+/src/include/justc-envdir/config.h
+/tools/downloads
+/tools/cross
+/dist

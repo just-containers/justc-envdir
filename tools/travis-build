@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+set -e
+
+if [[ ! -d tools ]] ; then
+    printf "This script needs to be run from the root of the repo, like ./tools/travis-setup\n"
+    exit 1
+fi
+
+mkdir -p tools/downloads
+mkdir -p tools/cross/bin
+mkdir -p dist
+
+export PATH="$(pwd)/tools/cross/bin:$PATH"
+
+targets=(
+'x86_64-linux-musl'
+'i486-linux-musl'
+'aarch64-linux-musl'
+'arm-linux-musleabi'
+'arm-linux-musleabihf'
+'powerpc64le-linux-musl'
+)
+
+declare -A target_short
+target_short[x86_64-linux-musl]="amd64"
+target_short[i486-linux-musl]="x86"
+target_short[aarch64-linux-musl]="aarch64"
+target_short[arm-linux-musleabi]="arm"
+target_short[arm-linux-musleabihf]="armhf"
+target_short[powerpc64le-linux-musl]="ppc64le"
+
+declare -A versions
+versions[justc-envdir]=1.0.0
+
+skaware_release=v2.0.0
+musl_make_release=v15
+gccver=7.3.0
+
+musl_cross_make="https://github.com/just-containers/musl-cross-make/releases/download/$musl_make_release"
+skaware="https://github.com/just-containers/skaware/releases/download/$skaware_release"
+
+manifesturl="$skaware/manifest.txt"
+rm -f "tools/downloads/manifest.txt"
+curl -s -R -L -o "tools/downloads/manifest.txt" "$manifesturl"
+
+while read -r line ; do
+  key=$(printf "${line}" | cut -d"=" -f1)
+  value=$(printf "${line}" | cut -d"=" -f2)
+  if [[ -n "${key}" && -n "${value}" ]] ; then
+    versions[$key]="$value"
+  fi
+done < tools/downloads/manifest.txt
+
+if [[ ! -f "tools/downloads/linux-amd64-github-release.bz2" ]] ; then
+  printf "Downloading tools/downloads/linux-amd64-github-release.bz2\n"
+  curl -s -R -L -o "tools/downloads/linux-amd64-github-release.bz2" \
+    "https://github.com/github-release/github-release/releases/download/v0.8.1/linux-amd64-github-release.bz2"
+fi
+
+bunzip2 "tools/downloads/linux-amd64-github-release.bz2"
+mv "tools/downloads/linux-amd64-github-release" "tools/cross/bin/github-release"
+
+for target in "${targets[@]}" ; do
+  gccurl="$musl_cross_make/gcc-${gccver}-${target}.tar.xz"
+  gccfile=$(basename $gccurl)
+  if [[ ! -f "tools/downloads/$gccfile" ]] ; then
+    printf "Downloading tools/downloads/$gccfile\n"
+    curl -s -R -L -o "tools/downloads/$gccfile" "$gccurl"
+  fi
+  skawareurl="$skaware/skalibs-${versions[skalibs]}-linux-${target_short[$target]}-dev.tar.gz"
+  skafile=$(basename $skawareurl)
+  if [[ ! -f "tools/downloads/$skafile" ]] ; then
+    printf "Downloading tools/downloads/$skafile\n"
+    curl -s -R -L -o "tools/downloads/$skafile" "$skawareurl"
+  fi
+
+  tar xf "tools/downloads/$gccfile" -C tools/cross
+  tar xf "tools/downloads/$skafile" -C tools/cross/${target} --strip-components=1
+
+  mkdir -p dist/${target}
+
+  CFLAGS="-g0 -Os" \
+  ./configure \
+    --target=$target \
+    --prefix=/usr \
+    --with-include=$(pwd)/tools/cross/${target}/include \
+    --with-lib=$(pwd)/tools/cross/${target}/lib \
+    --with-sysdeps=$(pwd)/tools/cross/${target}/lib/skalibs/sysdeps \
+    --enable-static-libc
+  make
+  ${target}-strip justc-envdir
+  make DESTDIR=dist/${target} install
+  make clean
+  rm -rf dist/${target}/usr/include
+
+  printf "Making tarball for $target\n"
+  tar cvzf dist/justc-envdir-${versions[justc-envdir]}-linux-${target_short[$target]}.tar.gz \
+    -C dist/${target} \
+    --owner 0 \
+    --group 0 \
+    usr
+done
+
+printf 'Built using `skalibs-%s`\n' "${versions[skalibs]}" > dist/release.md
+
+printf 'Compiling source tarball\n'
+
+make tgz
+cp /tmp/justc-envdir-${versions[justc-envdir]}.tar.gz dist/
+
