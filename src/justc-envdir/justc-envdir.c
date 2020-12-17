@@ -9,7 +9,7 @@
 #include <skalibs/env.h>
 #include <skalibs/direntry.h>
 #include <skalibs/stralloc.h>
-#include <skalibs/djbunix.h>
+#include <skalibs/stddjb.h>
 
 #define USAGE "justc-envdir [-I | -i ] dir prog..."
 
@@ -36,7 +36,7 @@ int main (int argc, char const *const *argv, char const *const *envp)
   if (argc < 2) strerr_dieusage(100, USAGE) ;
   if ((justc_envdir(*argv++, &modifs) < 0) && (insist || (errno != ENOENT)))
     strerr_diefu1sys(111, "justc_envdir") ;
-  xpathexec_r(argv, envp, env_len(envp), modifs.s, modifs.len) ;
+  xmexec_fm(argv, envp, env_len(envp), modifs.s, modifs.len) ;
 }
 
 static int justc_envdir (char const *path, stralloc *modifs)
