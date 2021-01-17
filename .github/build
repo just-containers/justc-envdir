@@ -30,7 +30,7 @@ target_short[arm-linux-musleabihf]="armhf"
 target_short[powerpc64le-linux-musl]="ppc64le"
 
 declare -A versions
-versions[justc-envdir]=1.0.0
+versions[justc-envdir]=$(grep version package/info | cut -d'=' -f2)
 
 skaware_release=v2.0.3
 musl_make_release=v15
