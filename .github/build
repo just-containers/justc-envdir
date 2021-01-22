@@ -32,7 +32,7 @@ target_short[powerpc64le-linux-musl]="ppc64le"
 declare -A versions
 versions[justc-envdir]=$(grep version package/info | cut -d'=' -f2)
 
-skaware_release=v2.0.3
+skaware_release=v2.0.4
 musl_make_release=v15
 gccver=7.3.0
 
