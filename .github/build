@@ -19,6 +19,7 @@ targets=(
 'arm-linux-musleabi'
 'arm-linux-musleabihf'
 'powerpc64le-linux-musl'
+'riscv64-linux-musl'
 )
 
 declare -A target_short
@@ -28,6 +29,7 @@ target_short[aarch64-linux-musl]="aarch64"
 target_short[arm-linux-musleabi]="arm"
 target_short[arm-linux-musleabihf]="armhf"
 target_short[powerpc64le-linux-musl]="ppc64le"
+target_short[riscv64-linux-musl]="riscv64"
 
 declare -A versions
 versions[justc-envdir]=$(grep version package/info | cut -d'=' -f2)
